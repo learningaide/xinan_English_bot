@@ -25,6 +25,8 @@ Embed this code snippet in your website
 ## inside the intergram folder
 docker build . -t jonathanlehner/xinan_english
 docker push jonathanlehner/xinan_english
+DOCKER_HOST="ssh://root@104.248.152.16" docker pull jonathanlehner/xinan_english
+DOCKER_HOST="ssh://root@104.248.152.16" docker-compose up -d
 
 docker images
 docker run -p 80:3000 -d jonathanlehner/xinan_english
@@ -33,8 +35,6 @@ docker run -p 80:3000 -d jonathanlehner/xinan_english
 DOCKER_HOST="ssh://root@104.248.152.16" docker pull jonathanlehner/xinan_english && DOCKER_HOST="ssh://root@104.248.152.16" docker run -t -d --network host jonathanlehner/xinan_english
 
 # https://stackoverflow.com/questions/62224447/creating-lets-encrypt-certificate-certbot-within-docker-image
-
-DOCKER_HOST="ssh://root@104.248.152.16" docker-compose up -d
 
 # was helpful
 https://sitegeist.de/blog/typo3-blog/docker-compose-setup-mit-nginx-reverse-proxy.html 
