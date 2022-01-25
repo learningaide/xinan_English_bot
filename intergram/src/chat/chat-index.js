@@ -19,7 +19,8 @@ render(
         host={getUrlParameter('host')}
         conf={conf}
     />,
-    document.getElementById('intergramChat')
+    document.getElementById('XinanChat')
+    // careful: https://github.com/preactjs/preact-www/issues/542
 );
 
 function getUrlParameter(name) {
