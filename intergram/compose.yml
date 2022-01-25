@@ -1,10 +1,14 @@
   your_container:
+    restart: "always"
     image: jonathanlehner/xinan_english
     environment:
       - VIRTUAL_HOST=server.real-impact.org
       - LETSENCRYPT_HOST=server.real-impact.org
       - LETSENCRYPT_EMAIL=jonathanslehner@gmail.com
       - VIRTUAL_PORT=3000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 
   nginx-proxy:
     image: jwilder/nginx-proxy
