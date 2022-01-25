@@ -32,13 +32,15 @@ docker images
 docker run -p 80:3000 -d jonathanlehner/xinan_english
 
 # clone ParlAI fork
-https://github.com/JonathanLehner/ParlAI
+git clone https://github.com/JonathanLehner/ParlAI
 python parlai/chat_service/services/browser_chat/run.py --config-path parlai/chat_service/tasks/chatbot/config.yml --port 10001
 nohup ... &
 
 zoo:blender/blender_1Bdistill/model
 zoo:blender/blender_90M/model
 zoo:blenderbot2/blenderbot2_400M/model
+
+
 
 
 DOCKER_HOST="ssh://root@104.248.152.16" docker pull jonathanlehner/xinan_english && DOCKER_HOST="ssh://root@104.248.152.16" docker run -t -d --network host jonathanlehner/xinan_english
