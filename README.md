@@ -31,9 +31,31 @@ DOCKER_HOST="ssh://root@104.248.152.16" docker-compose up -d
 docker images
 docker run -p 80:3000 -d jonathanlehner/xinan_english
 
+# enable swap
+swapon --show
+free -h
+df -h
+fallocate -l 38G /swapfile
+ls -lh /swapfile
+chmod 600 /swapfile
+ls -lh /swapfile
+mkswap /swapfile
+swapon /swapfile
+swapon --show
+free -h
+cp /etc/fstab /etc/fstab.bak
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
 # clone ParlAI fork
 git clone https://github.com/JonathanLehner/ParlAI
-python parlai/chat_service/services/browser_chat/run.py --config-path parlai/chat_service/tasks/chatbot/config.yml --port 10001
+cd ParlAI
+apt-get update 
+apt install pipenv -y
+pipenv shell
+##apt install python3-pip -y
+pip install -r requirements.txt
+pip install .
+nohup python parlai/chat_service/services/browser_chat/run.py --config-path parlai/chat_service/tasks/chatbot/config.yml --port 10001 &
 nohup ... &
 
 zoo:blender/blender_1Bdistill/model

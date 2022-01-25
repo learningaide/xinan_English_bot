@@ -12,7 +12,7 @@ dotenv.config()
 let global_user_id = 0;
 let global_chat_id = 0;
 
-const ws = new WebSocket('ws://127.0.0.1:10001/websocket', {
+const ws = new WebSocket('ws://ai.real-impact.org:10001/websocket', {
   perMessageDeflate: false
 });
 ws.on('open', function open() {
