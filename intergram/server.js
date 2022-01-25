@@ -7,8 +7,28 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const dotenv = require("dotenv")
+const WebSocket = require('ws');
 dotenv.config()
+let global_user_id = 0;
+let global_chat_id = 0;
 
+const ws = new WebSocket('ws://127.0.0.1:10001/websocket', {
+  perMessageDeflate: false
+});
+ws.on('open', function open() {
+    ws.send(JSON.stringify({"text":'hi'}));
+    ws.send(JSON.stringify({"text":'begin'}));
+});
+ws.on('message', function message(data) {
+    const parsedData = JSON.parse(data)
+    console.log('received: %s', parsedData);
+    console.log(global_user_id);
+    console.log(global_chat_id);
+    const text = parsedData["text"];
+    console.log(text)
+    io.to(global_user_id).emit(global_chat_id + "-" + global_user_id, {from: "admin", text, name: "AI"});
+});  
+  
 app.use(express.static('dist', {index: 'demo.html', maxage: '4h'}));
 app.use(bodyParser.json());
 
@@ -50,15 +70,19 @@ io.on('connection', function(socket){
     socket.on('register', function(registerMsg){
         let userId = registerMsg.userId;
         let chatId = registerMsg.chatId;
+        global_user_id = userId;
+        global_chat_id = chatId;
         let messageReceived = false;
         socket.join(userId);
         console.log("useId " + userId + " connected to chatId " + chatId);
 
         socket.on('message', function(msg) {
             messageReceived = true;
+            console.log(msg);
             io.to(userId).emit(chatId + "-" + userId, msg);
             let visitorName = msg.visitorName ? "[" + msg.visitorName + "]: " : "";
             sendTelegramMessage(chatId, userId + ":" + visitorName + " " + msg.text);
+            ws.send(JSON.stringify({"text":msg.text}));
         });
 
         socket.on('disconnect', function(){
