@@ -11,6 +11,7 @@ const WebSocket = require('ws');
 dotenv.config()
 let global_user_id = 0;
 let global_chat_id = 0;
+const found_words = {}
 
 const ws = new WebSocket('ws://ai.real-impact.org:10001/websocket', {
   perMessageDeflate: false
@@ -27,6 +28,27 @@ ws.on('message', function message(data) {
     const text = parsedData["text"];
     console.log(text)
     io.to(global_user_id).emit(global_chat_id + "-" + global_user_id, {from: "admin", text, name: "AI"});
+    const words = ["apple", "tree", "Eiffel", "Germany", "excellent"]
+    const chatId = global_chat_id;
+    if(words.some(el => text.includes(el))){
+        console.log("bingo word "+text)
+        const bingo_words = words.filter(el => text.includes(el));
+        console.log(bingo_words);
+        if(!found_words[chatId]){
+            found_words[chatId] = [];
+        }
+        found_words[chatId] = [...found_words[chatId], ...bingo_words];
+        console.log(found_words[chatId]);
+        if(found_words[chatId].length == 5){
+            io.emit(chatId, {name: "Admin", text: `BINGO! You win!! Please give feedback to improve the learning game.`, from: 'admin'});    
+        }
+        else{
+            const difference =  words.filter(x => !found_words[chatId].includes(x));
+            // we would want to use a color to show newly found words
+            io.emit(chatId, {name: "Admin", text: `You found the words:/你找到了这些词: ${found_words[chatId].join(", ")}, still missing: ${difference.join(", ")}`, from: 'admin'});    
+        }
+    }
+
 });  
   
 app.use(express.static('dist', {index: 'demo.html', maxage: '4h'}));
@@ -82,7 +104,15 @@ io.on('connection', function(socket){
             io.to(userId).emit(chatId + "-" + userId, msg);
             let visitorName = msg.visitorName ? "[" + msg.visitorName + "]: " : "";
             sendTelegramMessage(chatId, userId + ":" + visitorName + " " + msg.text);
-            ws.send(JSON.stringify({"text":msg.text}));
+            const words = ["apple", "tree", "Eiffel", "Germany", "excellent"]
+            if(words.some(el => msg.text.includes(el))){
+                console.log("forbidden word "+msg.text)
+                const forbidden_words = words.filter(el => msg.text.includes(el)).join(", ");
+                io.emit(chatId, {name: "Admin", text: `You cannot use the forbidden words:/您不能使用禁用词: ${forbidden_words}`, from: 'admin'});
+            }
+            else{
+                ws.send(JSON.stringify({"text":msg.text}));
+            }
         });
 
         socket.on('disconnect', function(){

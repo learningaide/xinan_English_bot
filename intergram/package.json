@@ -7,7 +7,8 @@
     "postinstall": "npm run build",
     "dev": "start http://localhost:3000/demo.html & node devServer.js",
     "build-pre": "mkdir -p dist && cp -r *.html dist && cp -r ./media dist && cp -r ./css dist",
-    "build": "webpack --mode production",
+    "build-post": "webpack --mode production",
+    "build": "npm run build-pre && npm run build-post",
     "test": "npm run -s lint",
     "lint": "eslint src"
   },

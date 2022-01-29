@@ -58,7 +58,7 @@ pip install .
 nohup python parlai/chat_service/services/browser_chat/run.py --config-path parlai/chat_service/tasks/chatbot/config.yml --port 10001 &
 nohup ... &
 
-zoo:blender/blender_1Bdistill/model
+zoo:blender/blender_400Mdistill/model
 zoo:blender/blender_90M/model
 zoo:blenderbot2/blenderbot2_400M/model
 
