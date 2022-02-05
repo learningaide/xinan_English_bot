@@ -1,4 +1,7 @@
 # xinan_English_bot
+
+for training https://colab.research.google.com/drive/1N1dH_85m9NFA1fsvCAZ0n3zukuO8o7N-#scrollTo=nRJGRtMKmIWV  
+
 t.me/xinan_English_bot 
 telegram token: 5152889973:AAFvHC3nbsvGyMHbmsIfglettN1joXcH0gQ
 Talk to Telegram @BotFather, create a new bot and get its API Token.
