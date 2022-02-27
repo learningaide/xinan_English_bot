@@ -129,7 +129,9 @@ io.on('connection', (socket) => {
                 io.emit(chatId, {name: "Admin", text: `You cannot use the forbidden words:/您不能使用禁用词: ${forbidden_words}`, from: 'admin'});
             }
             else{
-                ws.send(JSON.stringify({"text":msg.text}));
+                if(ws){
+                    ws.send(JSON.stringify({"text":msg.text}));
+                }
             }
         });
 
