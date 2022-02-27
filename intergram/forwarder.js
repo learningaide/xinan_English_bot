@@ -1,13 +1,15 @@
 const WebSocket = require('ws');
 
 console.log("starting forwarder")
+const ws_chat = new WebSocket('ws://server.real-impact.org/websocket', {
+  perMessageDeflate: false,
+  rejectUnauthorized: false
+});
+
 const ws_AI = new WebSocket('ws://localhost:10001/websocket', {
   perMessageDeflate: false
 });
 
-const ws_chat = new WebSocket('ws://localhost:8080/websocket', {
-  perMessageDeflate: false
-});
 
 ws_AI.on('open', function open() {
     console.log("connection openend to AI server");
@@ -41,4 +43,3 @@ ws_AI.on('message', function message(data) {
     counter++;
     }
 );  
-
