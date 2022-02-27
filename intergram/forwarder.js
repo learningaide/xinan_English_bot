@@ -2,7 +2,7 @@ const WebSocket = require('ws');
 const io = require("socket.io-client");
 
 console.log("starting forwarder")
-const ws_chat = io('ws://server.real-impact.org', {
+const ws_chat = io('wss://server.real-impact.org', {
 //const ws_chat = io('ws://localhost:3000', {
   perMessageDeflate: false,
   rejectUnauthorized: false
