@@ -1,20 +1,18 @@
 const WebSocket = require('ws');
+const io = require("socket.io-client");
 
 console.log("starting forwarder")
 const ws_AI = new WebSocket('ws://localhost:10001/websocket', {
   perMessageDeflate: false
 });
 
-const ws_chat = new WebSocket('ws://localhost:8080/websocket', {
+const ws_chat = io('ws://localhost:3000', {
   perMessageDeflate: false
 });
 
-ws_AI.on('open', function open() {
-    console.log("connection openend to AI server");
-});
-
-ws_chat.on('open', function open() {
+ws_chat.on('connect', () => {
     console.log("connection openend to chat server");
+    ws_chat.emit('registerAI', {});
 });
 
 ws_chat.on('message', function message(data) {
@@ -25,7 +23,7 @@ ws_chat.on('message', function message(data) {
 );  
 
 ws_AI.on('open', () => {
-    console.log("connection openend to chat server");
+    console.log("connection openend to AI server");
     ws_AI.send(JSON.stringify({"text":'hi'}));
     ws_AI.send(JSON.stringify({"text":'begin'}));
 });

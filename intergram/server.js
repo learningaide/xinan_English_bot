@@ -18,50 +18,20 @@ const found_words = {}
 });*/
 let ws;
 
-const wss = new WebSocket.WebSocketServer({ port: 3000 });
+http.listen(3000, () => {
+    console.log("started http + websocket server on port 3000");
+});
 
-console.log("started websocket server on port 8080");
-wss.on('connection', (socket) => {
+/*io.on('connection', (socket) => {
     ws = socket;
     console.log("AI connected")
 
     ws.on('open', () => {
         ws.send(JSON.stringify({"text":'hi'}));
         ws.send(JSON.stringify({"text":'begin'}));
-    });
-
-    ws.on('message', function message(data) {
-        const parsedData = JSON.parse(data)
-        console.log('received: %s', parsedData);
-        console.log(global_user_id);
-        console.log(global_chat_id);
-        const text = parsedData["text"];
-        console.log(text)
-        io.to(global_user_id).emit(global_chat_id + "-" + global_user_id, {from: "admin", text, name: "AI"});
-        const words = ["apple", "tree", "Eiffel", "Germany", "excellent"]
-        const chatId = global_chat_id;
-        if(words.some(el => text.includes(el))){
-            console.log("bingo word "+text)
-            const bingo_words = words.filter(el => text.includes(el));
-            console.log(bingo_words);
-            if(!found_words[chatId]){
-                found_words[chatId] = [];
-            }
-            found_words[chatId] = [...found_words[chatId], ...bingo_words];
-            console.log(found_words[chatId]);
-            if(found_words[chatId].length == 5){
-                io.emit(chatId, {name: "Admin", text: `BINGO! You win!! Please give feedback to improve the learning game.`, from: 'admin'});    
-            }
-            else{
-                const difference =  words.filter(x => !found_words[chatId].includes(x));
-                // we would want to use a color to show newly found words
-                io.emit(chatId, {name: "Admin", text: `You found the words:/你找到了这些词: ${found_words[chatId].join(", ")}, still missing: ${difference.join(", ")}`, from: 'admin'});    
-            }
-        }
-
     });  
     
-});
+}); */
 
 app.use(express.static('dist', {index: 'demo.html', maxage: '4h'}));
 app.use(bodyParser.json());
@@ -101,7 +71,43 @@ app.post('/hook', function(req, res){
 // handle chat visitors websocket messages
 io.on('connection', (socket) => {
 
+    socket.on('registerAI', (registerMsg) => {
+        ws = socket;
+        console.log("AI registered");
+        ws.on('message', (data) => {
+            const parsedData = JSON.parse(data)
+            console.log('received: %s', parsedData);
+            console.log(global_user_id);
+            console.log(global_chat_id);
+            const text = parsedData["text"];
+            console.log(text)
+            io.to(global_user_id).emit(global_chat_id + "-" + global_user_id, {from: "admin", text, name: "AI"});
+            const words = ["apple", "tree", "Eiffel", "Germany", "excellent"]
+            const chatId = global_chat_id;
+            if(words.some(el => text.includes(el))){
+                console.log("bingo word "+text)
+                const bingo_words = words.filter(el => text.includes(el));
+                console.log(bingo_words);
+                if(!found_words[chatId]){
+                    found_words[chatId] = [];
+                }
+                found_words[chatId] = [...found_words[chatId], ...bingo_words];
+                console.log(found_words[chatId]);
+                if(found_words[chatId].length == 5){
+                    io.emit(chatId, {name: "Admin", text: `BINGO! You win!! Please give feedback to improve the learning game.`, from: 'admin'});    
+                }
+                else{
+                    const difference =  words.filter(x => !found_words[chatId].includes(x));
+                    // we would want to use a color to show newly found words
+                    io.emit(chatId, {name: "Admin", text: `You found the words:/你找到了这些词: ${found_words[chatId].join(", ")}, still missing: ${difference.join(", ")}`, from: 'admin'});    
+                }
+            }
+    
+        });
+    });
+
     socket.on('register', (registerMsg) => {
+        console.log(registerMsg);
         let userId = registerMsg.userId;
         let chatId = registerMsg.chatId;
         global_user_id = userId;
@@ -110,7 +116,7 @@ io.on('connection', (socket) => {
         socket.join(userId);
         console.log("useId " + userId + " connected to chatId " + chatId);
 
-        socket.on('message', function(msg) {
+        socket.on('message', (msg) => {
             messageReceived = true;
             console.log(msg);
             io.to(userId).emit(chatId + "-" + userId, msg);
@@ -157,10 +163,6 @@ app.post('/usage-start', cors(), (req, res) => {
 app.post('/usage-end', cors(), (req, res) => {
     res.statusCode = 200;
     res.end();
-});
-
-http.listen(process.env.PORT || 3000, () => {
-    console.log('listening on port:' + (process.env.PORT || 3000));
 });
 
 app.get("/.well-known/acme-challenge/:content", (req, res) => {
