@@ -18,7 +18,7 @@ const found_words = {}
 });*/
 let ws;
 
-const wss = new WebSocket.WebSocketServer({ port: 8080 });
+const wss = new WebSocket.WebSocketServer({ port: 3000 });
 
 console.log("started websocket server on port 8080");
 wss.on('connection', (socket) => {
