@@ -76,14 +76,17 @@ io.on('connection', (socket) => {
         console.log("AI registered");
         ws.on('message', (data) => {
             const parsedData = JSON.parse(data)
-            console.log('received: %s', parsedData);
-            console.log(global_user_id);
-            console.log(global_chat_id);
+            console.log('received from AI: %s', parsedData);
             const text = parsedData["text"];
-            console.log(text)
-            io.to(global_user_id).emit(global_chat_id + "-" + global_user_id, {from: "admin", text, name: "AI"});
+            const chatId = parsedData["chatId"];
+            const userId = parsedData["userId"];
+            console.log(text);
+            console.log(chatId);
+            console.log(userId)
+            sendTelegramMessage(chatId, "AI said to "+userId + ": " + msg.text);
+            io.to(userId).emit(chatId + "-" + userId, {from: "admin", text, name: "AI"});
+
             const words = ["apple", "tree", "Eiffel", "Germany", "excellent"]
-            const chatId = global_chat_id;
             if(words.some(el => text.includes(el))){
                 console.log("bingo word "+text)
                 const bingo_words = words.filter(el => text.includes(el));
@@ -110,12 +113,9 @@ io.on('connection', (socket) => {
         console.log(registerMsg);
         let userId = registerMsg.userId;
         let chatId = registerMsg.chatId;
-        global_user_id = userId;
-        global_chat_id = chatId;
         let messageReceived = false;
         socket.join(userId);
         console.log("useId " + userId + " connected to chatId " + chatId);
-
         socket.on('message', (msg) => {
             messageReceived = true;
             console.log(msg);
@@ -130,7 +130,7 @@ io.on('connection', (socket) => {
             }
             else{
                 if(ws){
-                    ws.send(JSON.stringify({"text":msg.text}));
+                    ws.send(JSON.stringify({"chatId": chatId, "userId": userId, "text":msg.text}));
                 }
             }
         });
