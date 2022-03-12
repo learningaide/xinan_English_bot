@@ -83,7 +83,7 @@ io.on('connection', (socket) => {
             console.log(text);
             console.log(chatId);
             console.log(userId)
-            sendTelegramMessage(chatId, "AI said to "+userId + ": " + msg.text);
+            sendTelegramMessage(chatId, "AI said to "+userId + ": " + text);
             io.to(userId).emit(chatId + "-" + userId, {from: "admin", text, name: "AI"});
 
             const words = ["apple", "tree", "Eiffel", "Germany", "excellent"]
