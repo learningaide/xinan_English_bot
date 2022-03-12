@@ -1,8 +1,9 @@
 const WebSocket = require('ws');
 const io = require("socket.io-client");
 
-chatId_map_ws = {}
-chatId_map_uid = {}
+// chatId is always the same
+userId_map_ws = {}
+userId_map_uid = {}
 
 console.log("starting forwarder")
 const ws_chat = io('wss://server.real-impact.org', {
@@ -25,16 +26,17 @@ ws_chat.on('message', (data) => {
     let userId = parsedData['userId'];
     let chatId = parsedData['chatId'];
     let counter = 0;
-    if(typeof(chatId_map_ws[chatId]) == 'undefined'){
+    if(typeof(userId_map_ws[userId]) == 'undefined'){
         console.log("opening new websocket")
-        chatId_map_ws[chatId] = new WebSocket('ws://localhost:10001/websocket', {
+        userId_map_ws[userId] = new WebSocket('ws://localhost:10001/websocket', {
             perMessageDeflate: false
           });
-        chatId_map_uid[userId] = userId;
-        chatId_map_ws[chatId].on('open', () => {
+        userId_map_uid[userId] = userId;
+        userId_map_ws[userId].on('open', () => {
             console.log("connection openend to AI server");
-            chatId_map_ws[chatId].send(JSON.stringify({"text":'hi'}));
-            chatId_map_ws[chatId].send(JSON.stringify({"text":'begin'}));
+            userId_map_ws[userId].send(JSON.stringify({"text":'hi'}));
+            userId_map_ws[userId].send(JSON.stringify({"text":'begin'}));
+            setTimeout(()=>userId_map_ws[userId].send(data),1000); // need to wait a bit
         });
         const onmessage = (data) => { // do not use arrow function so context is saved
             const parsedData = JSON.parse(data)
@@ -47,10 +49,10 @@ ws_chat.on('message', (data) => {
             };
             counter++;
         }
-        chatId_map_ws[chatId].on('message', onmessage);
+        userId_map_ws[userId].on('message', onmessage); 
     } else{
-        //console.log(chatId_map[chatId]);
-        chatId_map_ws[chatId].send(data);
+        //console.log(userId_map[chatId]);
+        userId_map_ws[userId].send(data);
     }
     
 });  
