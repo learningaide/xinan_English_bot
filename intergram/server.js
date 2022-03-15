@@ -12,6 +12,7 @@ dotenv.config()
 let global_user_id = 0;
 let global_chat_id = 0;
 const found_words = {}
+const score = {}
 
 /*let ws = new WebSocket('ws://ai.real-impact.org:10001/websocket', {
   perMessageDeflate: false
@@ -86,23 +87,32 @@ io.on('connection', (socket) => {
             sendTelegramMessage(chatId, "AI said to "+userId + ": " + text);
             io.to(userId).emit(chatId + "-" + userId, {from: "admin", text, name: "AI"});
 
-            const words = ["apple", "tree", "Eiffel", "Germany", "excellent"]
-            if(words.some(el => text.includes(el))){
+            const words = ["apple", "tree", "Eiffel", "Germany", "Paris"]
+            const hidden_words = ["pear", "forest", "France", "banana", "Berlin"]
+            const all_words = words + hidden_words;
+
+            let found_something = false;
+            if(all_words.some(el => text.includes(el))){
                 console.log("bingo word "+text)
-                const bingo_words = words.filter(el => text.includes(el));
+                const bingo_words = all_words.filter(el => text.includes(el));
                 console.log(bingo_words);
                 if(!found_words[chatId]){
                     found_words[chatId] = [];
                 }
                 found_words[chatId] = [...found_words[chatId], ...bingo_words];
                 console.log(found_words[chatId]);
+                found_something = true;
+            }
+
+            if(found_something){
                 if(found_words[chatId].length == 5){
                     io.emit(chatId, {name: "Admin", text: `BINGO! You win!! Please give feedback to improve the learning game.`, from: 'admin'});    
                 }
                 else{
                     const difference =  words.filter(x => !found_words[chatId].includes(x));
+                    const num_mh = hidden_words.filter(x => !found_words[chatId].includes(x)).length;
                     // we would want to use a color to show newly found words
-                    io.emit(chatId, {name: "Admin", text: `You found the words:/你找到了这些词: ${found_words[chatId].join(", ")}, still missing: ${difference.join(", ")}`, from: 'admin'});    
+                    io.emit(chatId, {name: "Admin", text: `You found the words:/你找到了这些词: ${found_words[chatId].join(", ")}, still missing: ${difference.join(", ")} and ${num_mh} hidden words.`, from: 'admin'});    
                 }
             }
     
@@ -122,8 +132,13 @@ io.on('connection', (socket) => {
             io.to(userId).emit(chatId + "-" + userId, msg);
             let visitorName = msg.visitorName ? "[" + msg.visitorName + "]: " : "";
             sendTelegramMessage(chatId, userId + ":" + visitorName + " " + msg.text);
-            const words = ["apple", "tree", "Eiffel", "Germany", "excellent"]
-            if(words.some(el => msg.text.includes(el))){
+            const words = ["apple", "tree", "Eiffel", "Germany", "excellent"];
+            const forbidden_words = ["Tibet", "genocide", "Tiananmen"];
+            // correct spelling
+            if(forbidden_words.some(el => msg.text.includes(el))){
+                io.emit(chatId, {name: "Admin", text: `Your message contains inappropriate content. 您的消息包含不当内容.`, from: 'admin'});
+            }
+            else if(words.some(el => msg.text.includes(el))){
                 console.log("forbidden word "+msg.text)
                 const forbidden_words = words.filter(el => msg.text.includes(el)).join(", ");
                 io.emit(chatId, {name: "Admin", text: `You cannot use the forbidden words:/您不能使用禁用词: ${forbidden_words}`, from: 'admin'});
