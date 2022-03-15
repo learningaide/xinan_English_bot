@@ -93,12 +93,14 @@ io.on('connection', (socket) => {
             io.to(userId).emit(chatId + "-" + userId, {from: "admin", text, name: "AI"});
 
             if(all_words.some(el => text.includes(el))){
-                console.log("bingo word "+text)
-                const bingo_words = all_words.filter(el => text.includes(el)).filter(el => !found_words[userId].includes(el));
-                console.log(bingo_words);
                 if(!found_words[userId]){
                     found_words[userId] = [];
                 }
+                
+                console.log("bingo word "+text)
+                const bingo_words = all_words.filter(el => text.includes(el)).filter(el => !found_words[userId].includes(el));
+                console.log(bingo_words);
+                
                 const found_words_str = [...found_words[userId], ...(bingo_words.map(w=>"*"+w+"*"))];
                 found_words[userId] = [...found_words[userId], ...bingo_words];
                 console.log(found_words[userId]);
