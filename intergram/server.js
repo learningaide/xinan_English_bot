@@ -78,7 +78,7 @@ io.on('connection', (socket) => {
         ws.on('message', (data) => {
             const parsedData = JSON.parse(data)
             console.log('received from AI: %s', parsedData);
-            const text = parsedData["text"];
+            const text = parsedData["text"].replace("_POTENTIALLY_UNSAFE__","");
             const chatId = parsedData["chatId"];
             const userId = parsedData["userId"];
             console.log(text);
@@ -89,7 +89,7 @@ io.on('connection', (socket) => {
 
             const words = ["apple", "tree", "Eiffel", "Germany", "Paris"]
             const hidden_words = ["pear", "forest", "France", "banana", "Berlin"]
-            const all_words = words + hidden_words;
+            const all_words = words.concat(hidden_words);
 
             let found_something = false;
             if(all_words.some(el => text.includes(el))){
@@ -134,7 +134,7 @@ io.on('connection', (socket) => {
             sendTelegramMessage(chatId, userId + ":" + visitorName + " " + msg.text);
             const words = ["apple", "tree", "Eiffel", "Germany", "excellent"];
             const forbidden_words = ["Tibet", "genocide", "Tiananmen"];
-            // correct spelling
+            
             if(forbidden_words.some(el => msg.text.includes(el))){
                 io.emit(chatId, {name: "Admin", text: `Your message contains inappropriate content. 您的消息包含不当内容.`, from: 'admin'});
             }
@@ -144,6 +144,14 @@ io.on('connection', (socket) => {
                 io.emit(chatId, {name: "Admin", text: `You cannot use the forbidden words:/您不能使用禁用词: ${forbidden_words}`, from: 'admin'});
             }
             else{
+                // correct spelling
+                var writeGood = require('write-good');
+                var suggestions = writeGood(msg.text, { passive: false, whitelist: ['read-only'] });
+                console.log(suggestions);
+                if(suggestions.length > 0){
+                    const suggestions_str = suggestions.map((el)=>el.reason).join(", ");
+                    io.emit(chatId, {name: "Admin", text: `I have the following suggestions... 我有以下建议... ${suggestions_str}`, from: 'admin'});
+                }
                 if(ws){
                     ws.send(JSON.stringify({"chatId": chatId, "userId": userId, "text":msg.text}));
                 }
