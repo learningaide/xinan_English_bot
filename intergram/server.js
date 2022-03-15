@@ -94,7 +94,7 @@ io.on('connection', (socket) => {
 
             if(all_words.some(el => text.includes(el))){
                 console.log("bingo word "+text)
-                const bingo_words = all_words.filter(el => text.includes(el));
+                const bingo_words = all_words.filter(el => text.includes(el)).filter(el => !found_words[userId].includes(el));
                 console.log(bingo_words);
                 if(!found_words[userId]){
                     found_words[userId] = [];
