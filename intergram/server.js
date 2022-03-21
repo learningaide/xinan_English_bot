@@ -137,7 +137,7 @@ io.on('connection', (socket) => {
             let visitorName = msg.visitorName ? "[" + msg.visitorName + "]: " : "";
             sendTelegramMessage(chatId, userId + ":" + visitorName + " " + msg.text);
             const num_words = msg.text.split(" ");
-            const found_target_words = words.filter(el => msg.text.includes(el));
+            const found_target_words = words.filter(el => msg.text.toLowerCase().includes(el.toLowerCase()));
             if(forbidden_words.some(el => msg.text.toLowerCase().includes(el.toLowerCase()))){
                 io.emit(chatId, {name: "Admin", text: `Your message contains inappropriate content. 您的消息包含不当内容.`, from: 'admin'});
             }
