@@ -69,8 +69,11 @@ app.post('/hook', function(req, res){
     res.end();
 });
 
-const words = ["apple", "tree", "Eiffel", "Germany", "Paris"]
-const hidden_words = ["pear", "forest", "France", "banana", "Berlin"]
+const topic = "University";
+//const word_list = ["apple", "tree", "Eiffel", "Germany", "Paris", "pear", "forest", "France", "banana", "Berlin"]
+const word_list = ["associate's degree","bachelor's degree","campus","community college","course","credit","degree","dorm","enroll","exam","faculty","fail","financial aid","fraternity","GPA","graduate","graduate","instructor","lecture","major","master's degree","matriculate","notebook","notes","pass","PhD","postgraduate","prerequisite","professor","quiz","register","research","research","room and board","roommate","semester","sorority","spring break","syllabus","textbook","transcript","trimester","tuition","undergraduate","university"];
+const words = word_list.slice(0,word_list.length/2);
+const hidden_words = word_list.slice(word_list.length/2);
 const all_words = words.concat(hidden_words);
 const forbidden_words = ["Tibet", "genocide", "Tiananmen"];
 
@@ -125,20 +128,30 @@ io.on('connection', (socket) => {
         let messageReceived = false;
         socket.join(userId);
         console.log("useId " + userId + " connected to chatId " + chatId);
+        io.emit(chatId, {name: "Admin", text: `Your target words are about the topic "${topic}": ${words.join(", ")} and there are ${hidden_words.length} hidden target words.`, from: 'admin'});
+
         socket.on('message', (msg) => {
             messageReceived = true;
             console.log(msg);
             io.to(userId).emit(chatId + "-" + userId, msg);
             let visitorName = msg.visitorName ? "[" + msg.visitorName + "]: " : "";
             sendTelegramMessage(chatId, userId + ":" + visitorName + " " + msg.text);
-            
-            if(forbidden_words.some(el => msg.text.includes(el))){
+            const num_words = msg.text.split(" ");
+            const found_target_words = words.filter(el => msg.text.includes(el));
+            if(forbidden_words.some(el => msg.text.toLowerCase().includes(el.toLowerCase()))){
                 io.emit(chatId, {name: "Admin", text: `Your message contains inappropriate content. 您的消息包含不当内容.`, from: 'admin'});
             }
-            else if(words.some(el => msg.text.includes(el))){
-                console.log("forbidden word "+msg.text)
-                const forbidden_words = words.filter(el => msg.text.includes(el)).join(", ");
-                io.emit(chatId, {name: "Admin", text: `You cannot use the forbidden words:/您不能使用禁用词: ${forbidden_words}`, from: 'admin'});
+            else if(num_words.length < 5){
+                console.log("You need to write at least 7 words / 你需要写至少7个字.")
+                io.emit(chatId, {name: "Admin", text: `You need to write at least 5 words / 你需要写至少7个字.`, from: 'admin'});
+            }
+            else if(msg.text.match(/[\u3400-\u9FBF]/)){
+                console.log("You cannot use any Chinese characters / 你不能使用任何汉字."+msg.text)
+                io.emit(chatId, {name: "Admin", text: `You cannot use any Chinese characters / 你不能使用任何汉字.`, from: 'admin'});
+            }
+            else if(found_target_words.length > 0){
+                console.log(`forbidden words ${found_target_words} - from ${msg.text}`);
+                io.emit(chatId, {name: "Admin", text: `You cannot use the target words: ${found_target_words.join(", ")}/您不能使用禁用词: ${found_target_words}`, from: 'admin'});
             }
             else{
                 // correct spelling
