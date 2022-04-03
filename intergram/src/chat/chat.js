@@ -14,9 +14,9 @@ export default class Chat extends Component {
         super(props);
         if (store.enabled) {
             this.messagesKey = 'messages' + '.' + props.chatId + '.' + props.host;
-            this.state = {messages: store.get(this.messagesKey) || store.set(this.messagesKey, [])};
+            this.state = {messages: store.get(this.messagesKey) || store.set(this.messagesKey, []),  recording: false};
         } else {
-            this.state = {messages: []};
+            this.state = {messages: [], recording: false};
         }
     }
 
@@ -34,28 +34,19 @@ export default class Chat extends Component {
 
         var constraints = { audio: true };
         navigator.mediaDevices.getUserMedia(constraints).then((mediaStream) => {
-            var mediaRecorder = new MediaRecorder(mediaStream);
-            mediaRecorder.onstart = (e) => {
+            this.mediaRecorder = new MediaRecorder(mediaStream);
+            this.mediaRecorder.onstart = (e) => {
                 this.chunks = [];
             };
-            mediaRecorder.ondataavailable = (e) => {
-                print(this.chunks)
+            this.mediaRecorder.ondataavailable = (e) => {
+                //console.log(this.chunks)
                 this.chunks.push(e.data);
             };
-            mediaRecorder.onstop = (e) => {
+            this.mediaRecorder.onstop = (e) => {
                 var blob = new Blob(this.chunks, { 'type' : 'audio/ogg; codecs=opus' });
                 this.socket.emit('radio', blob);
                 console.log("audio sent");
             };
-
-            // Start recording
-            mediaRecorder.start();
-
-            // Stop recording after 5 seconds and broadcast it to server
-            setTimeout(() => {
-                mediaRecorder.stop();
-                console.log("recording stopped");
-            }, 2000);
         });
 
         // When the client receives a voice message it will play the sound
@@ -72,11 +63,32 @@ export default class Chat extends Component {
         return (
             <div>
                 <MessageArea messages={state.messages} conf={this.props.conf}/>
-
-                <input class="textarea" type="text" placeholder={"Send a message..."}
-                       ref={(input) => { this.input = input }}
-                       onKeyPress={this.handleKeyPress}/>
-
+                <div>
+                    <input class="textarea" type="text" placeholder={"Send a message..."}
+                        ref={(input) => { this.input = input }}
+                        onKeyPress={this.handleKeyPress}/>
+                </div>
+                <div style={{position: "fixed", bottom: "50px"}}>
+                    {
+                    this.state.recording ? 
+                        <button onClick={()=> {
+                            // Stop recording and broadcast it to server
+                            this.mediaRecorder.stop();
+                            console.log("recording stopped");
+                            this.setState({
+                                recording: false
+                            });
+                        }}
+                        >Finish recording</button> : 
+                        <button onClick={()=> {
+                            // Start recording
+                            this.mediaRecorder.start();
+                            this.setState({
+                                recording: true
+                            });
+                        }}>Start recording</button>
+                    }
+                </div>
                 <a class="banner" target="_blank">
                     Powered by <b>ACE</b>&nbsp;
                 </a>

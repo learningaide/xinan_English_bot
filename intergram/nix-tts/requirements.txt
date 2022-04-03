@@ -5,3 +5,4 @@ SpeechRecognition
 pyaudio
 pydub
 vosk
+soundfile

@@ -103,7 +103,8 @@ io.on('connection', (socket) => {
         ws_SR = socket;
         console.log("SR registered");
         ws_SR.on('message', (data) => {
-            const parsedData = JSON.parse(data)
+            console.log(data)
+            const parsedData = data
             console.log('received from AI (SR): %s', parsedData);
             const text = parsedData["text"].replace("_POTENTIALLY_UNSAFE__","");
             const chatId = parsedData["chatId"];
@@ -111,9 +112,11 @@ io.on('connection', (socket) => {
             console.log(text);
             console.log(chatId);
             console.log(userId)
-            sendTelegramMessage(chatId, "AI said to "+userId + ": " + text);
-            io.to(userId).emit(chatId + "-" + userId, {from: "admin", text, name: "AI (SR)"});
-            io.emit(chatId, {name: "Admin", text: `You found the words:/你找到了这些词: ${found_words_str.join(", ")}, still missing: ${difference.join(", ")} and ${num_mh} hidden words.`, from: 'admin'});        
+            io.to(userId).emit(chatId + "-" + userId, {name: "AI (TTS)", ...data});
+            sendTelegramMessage(chatId, userId + ": " + text);
+            if(ws){
+                ws.send(JSON.stringify({"chatId": chatId, "userId": userId, "text": text}));
+            }
         });
     });
 
@@ -170,6 +173,17 @@ io.on('connection', (socket) => {
         console.log("useId " + userId + " connected to chatId " + chatId);
         io.emit(chatId, {name: "Admin", text: `Your target words are about the topic "${topic}": ${words.join(", ")} and there are ${hidden_words.length} hidden target words.`, from: 'admin'});
 
+        socket.on('radio', (msg) => {
+            console.log(msg);
+            if(ws_SR){
+                io.to(userId).emit(chatId + "-" + userId, {name: "Admin", text: "Processing audio..."});
+                ws_SR.send(JSON.stringify({"chatId": chatId, "userId": userId, "audio": msg}));
+            }
+            else{
+                io.to(userId).emit(chatId + "-" + userId, {name: "Admin", text: "Transcription currently unavailable"});
+            }
+        });
+
         socket.on('message', (msg) => {
             messageReceived = true;
             console.log(msg);
@@ -207,9 +221,6 @@ io.on('connection', (socket) => {
                 }
                 if(ws_TTS){
                     ws_TTS.send(JSON.stringify({"chatId": chatId, "userId": userId, "text":msg.text}));
-                }
-                if(ws_SR){
-                    ws_SR.send(JSON.stringify({"chatId": chatId, "userId": userId, "text":msg.text}));
                 }
             }
         });
