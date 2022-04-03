@@ -18,6 +18,8 @@ const score = {}
   perMessageDeflate: false
 });*/
 let ws;
+let ws_TTS;
+let ws_SR;
 
 http.listen(3000, () => {
     console.log("started http + websocket server on port 3000");
@@ -72,13 +74,48 @@ app.post('/hook', function(req, res){
 const topic = "University";
 //const word_list = ["apple", "tree", "Eiffel", "Germany", "Paris", "pear", "forest", "France", "banana", "Berlin"]
 const word_list = ["associate's degree","bachelor's degree","campus","community college","course","credit","degree","dorm","enroll","exam","faculty","fail","financial aid","fraternity","GPA","graduate","graduate","instructor","lecture","major","master's degree","matriculate","notebook","notes","pass","PhD","postgraduate","prerequisite","professor","quiz","register","research","research","room and board","roommate","semester","sorority","spring break","syllabus","textbook","transcript","trimester","tuition","undergraduate","university"];
-const words = word_list.slice(0,word_list.length/2);
-const hidden_words = word_list.slice(word_list.length/2);
+const words = word_list.slice(0,5);
+const hidden_words = word_list.slice(5);
 const all_words = words.concat(hidden_words);
 const forbidden_words = ["Tibet", "genocide", "Tiananmen"];
 
 // handle chat visitors websocket messages
 io.on('connection', (socket) => {
+
+    socket.on('registerTTS', (registerMsg) => {
+        ws_TTS = socket;
+        console.log("TTS registered");
+        ws_TTS.on('message', (data) => {
+            const parsedData = data
+            console.log('received from AI (TTS): %s', parsedData);
+            const audio = parsedData["audio"];
+            const chatId = parsedData["chatId"];
+            const userId = parsedData["userId"];
+            console.log(audio);
+            console.log(chatId);
+            console.log(userId)
+            //io.to(userId).emit(chatId + "-" + userId, {from: "admin", text, name: "AI (TTS)"});
+            io.to(userId).emit("voice", audio);        
+        });
+    });
+
+    socket.on('registerSR', (registerMsg) => {
+        ws_SR = socket;
+        console.log("SR registered");
+        ws_SR.on('message', (data) => {
+            const parsedData = JSON.parse(data)
+            console.log('received from AI (SR): %s', parsedData);
+            const text = parsedData["text"].replace("_POTENTIALLY_UNSAFE__","");
+            const chatId = parsedData["chatId"];
+            const userId = parsedData["userId"];
+            console.log(text);
+            console.log(chatId);
+            console.log(userId)
+            sendTelegramMessage(chatId, "AI said to "+userId + ": " + text);
+            io.to(userId).emit(chatId + "-" + userId, {from: "admin", text, name: "AI (SR)"});
+            io.emit(chatId, {name: "Admin", text: `You found the words:/你找到了这些词: ${found_words_str.join(", ")}, still missing: ${difference.join(", ")} and ${num_mh} hidden words.`, from: 'admin'});        
+        });
+    });
 
     socket.on('registerAI', (registerMsg) => {
         ws = socket;
@@ -94,6 +131,9 @@ io.on('connection', (socket) => {
             console.log(userId)
             sendTelegramMessage(chatId, "AI said to "+userId + ": " + text);
             io.to(userId).emit(chatId + "-" + userId, {from: "admin", text, name: "AI"});
+            if(ws_TTS){
+                ws_TTS.send(JSON.stringify({"chatId": chatId, "userId": userId, "text": text}));
+            }
 
             if(all_words.some(el => text.includes(el))){
                 if(!found_words[userId]){
@@ -136,14 +176,14 @@ io.on('connection', (socket) => {
             io.to(userId).emit(chatId + "-" + userId, msg);
             let visitorName = msg.visitorName ? "[" + msg.visitorName + "]: " : "";
             sendTelegramMessage(chatId, userId + ":" + visitorName + " " + msg.text);
-            const num_words = msg.text.split(" ");
+            const num_words = msg.text.trim().split(" ");
             const found_target_words = words.filter(el => msg.text.toLowerCase().includes(el.toLowerCase()));
             if(forbidden_words.some(el => msg.text.toLowerCase().includes(el.toLowerCase()))){
                 io.emit(chatId, {name: "Admin", text: `Your message contains inappropriate content. 您的消息包含不当内容.`, from: 'admin'});
             }
-            else if(num_words.length < 5){
+            else if(num_words.length < 2){
                 console.log("You need to write at least 7 words / 你需要写至少7个字.")
-                io.emit(chatId, {name: "Admin", text: `You need to write at least 5 words / 你需要写至少7个字.`, from: 'admin'});
+                io.emit(chatId, {name: "Admin", text: `You need to write at least 3 words / 你需要写至少3个字.`, from: 'admin'});
             }
             else if(msg.text.match(/[\u3400-\u9FBF]/)){
                 console.log("You cannot use any Chinese characters / 你不能使用任何汉字."+msg.text)
@@ -164,6 +204,12 @@ io.on('connection', (socket) => {
                 }
                 if(ws){
                     ws.send(JSON.stringify({"chatId": chatId, "userId": userId, "text":msg.text}));
+                }
+                if(ws_TTS){
+                    ws_TTS.send(JSON.stringify({"chatId": chatId, "userId": userId, "text":msg.text}));
+                }
+                if(ws_SR){
+                    ws_SR.send(JSON.stringify({"chatId": chatId, "userId": userId, "text":msg.text}));
                 }
             }
         });

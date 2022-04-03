@@ -1,0 +1,4 @@
+websockets
+phonemizer
+numpy
+python-socketio[client]

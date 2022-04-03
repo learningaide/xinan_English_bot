@@ -1,0 +1,7 @@
+numpy
+onnxruntime==1.7.0
+phonemizer==2.2.2
+SpeechRecognition
+pyaudio
+pydub
+vosk
