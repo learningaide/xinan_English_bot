@@ -196,7 +196,7 @@ io.on('connection', (socket) => {
                 io.emit(chatId, {name: "Admin", text: `Your message contains inappropriate content. 您的消息包含不当内容.`, from: 'admin'});
             }
             else if(num_words.length < 2){
-                console.log("You need to write at least 7 words / 你需要写至少7个字.")
+                console.log("You need to write at least 3 words / 你需要写至少3个字.")
                 io.emit(chatId, {name: "Admin", text: `You need to write at least 3 words / 你需要写至少3个字.`, from: 'admin'});
             }
             else if(msg.text.match(/[\u3400-\u9FBF]/)){
