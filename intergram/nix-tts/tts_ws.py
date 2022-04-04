@@ -46,7 +46,8 @@ def on_message(data):
     print("special message TTS")
     
 
-sio.connect('http://localhost:3000')
+sio.connect('wss://server.real-impact.org')
+#sio.connect('http://localhost:3000')
 print('my sid is', sio.sid)
 
 sio.emit('registerTTS', {'foo': 'bar'})

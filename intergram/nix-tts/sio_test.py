@@ -23,7 +23,7 @@ def message(data):
 def on_message(data):
     print('I received a message!')
 
-sio.connect('http://localhost:3000')
+sio.connect('https://server.real-impact.org:3000')
 print('my sid is', sio.sid)
 
 sio.emit('registerTTS', {'foo': 'bar'})

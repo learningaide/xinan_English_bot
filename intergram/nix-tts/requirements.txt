@@ -1,8 +1,9 @@
 numpy
 onnxruntime==1.7.0
 phonemizer==2.2.2
-SpeechRecognition
+git+https://github.com/Uberi/speech_recognition
 pyaudio
 pydub
 vosk
 soundfile
+scipy
